@@ -15,7 +15,7 @@ It covers the full deployment lifecycle: KVM host preparation or bare-metal prov
 
 **KVM is fast.** Provision a full cluster in a day. Ideal for validating automation, testing upgrades, and learning ACP.
 
-**Bare-metal is real.** Hardware varies by site. Contributions from the community for different vendors and configurations are especially welcome — see [CONTRIBUTING.md](../CONTRIBUTING.md).
+**Bare-metal is real.** Hardware varies by site. Contributions from the community for different vendors and configurations are especially welcome — see [CONTRIBUTING.md](https://github.com/tosin2013/acp-deployment/blob/main/CONTRIBUTING.md).
 
 Both topologies (**Converged** for full-stack ACP and **SNO** for minimal edge nodes) are supported on both paths.
 
@@ -45,7 +45,7 @@ Step-by-step guides that take you through a learning experience. Follow along in
 | [Deploy your first ACP cluster on IBM Cloud KVM](tutorials/deploy-acp-on-ibm-cloud-kvm.md) | 🖥️ KVM | A 3-node OCP cluster on KVM VMs with ODF, TLS, and platform services |
 | [Explore ODF persistent storage](tutorials/explore-odf-storage.md) | Both | Hands-on experience with Ceph block and file storage (PVCs, RWX volumes) |
 
-> **Want a bare-metal tutorial?** If you have physical servers and can document the steps, please contribute one — see [CONTRIBUTING.md](../CONTRIBUTING.md).
+> **Want a bare-metal tutorial?** If you have physical servers and can document the steps, please contribute one — see [CONTRIBUTING.md](https://github.com/tosin2013/acp-deployment/blob/main/CONTRIBUTING.md).
 
 ---
 
@@ -104,10 +104,10 @@ Context, background, and design rationale. Answers "why?" rather than "how?".
 ## Release notes and changelog
 
 - [v4.21.0 Release Notes](releases/v4.21.0.md)
-- [CHANGELOG](../CHANGELOG.md)
+- [CHANGELOG](https://github.com/tosin2013/acp-deployment/blob/main/CHANGELOG.md)
 
 ---
 
 ## AI agent guidance
 
-See [CLAUDE.md](../CLAUDE.md) for known failure patterns and conventions relevant to AI-assisted development on this repository.
+See [CLAUDE.md](https://github.com/tosin2013/acp-deployment/blob/main/CLAUDE.md) for known failure patterns and conventions relevant to AI-assisted development on this repository.

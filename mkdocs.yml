@@ -6,7 +6,9 @@ site_description: >-
 site_url: https://tosin2013.github.io/acp-deployment
 repo_url: https://github.com/tosin2013/acp-deployment
 repo_name: tosin2013/acp-deployment
-edit_uri: edit/main/
+edit_uri: edit/main/docs/
+
+docs_dir: docs
 
 theme:
   name: material
@@ -50,37 +52,58 @@ markdown_extensions:
   - attr_list
 
 nav:
-  - Home: docs/index.md
+  - Home: index.md
   - Tutorials:
-    - docs/tutorials/index.md
-    - Deploy ACP on IBM Cloud KVM: docs/tutorials/deploy-acp-on-ibm-cloud-kvm.md
-    - Explore ODF persistent storage: docs/tutorials/explore-odf-storage.md
+    - tutorials/index.md
+    - Deploy ACP on IBM Cloud KVM: tutorials/deploy-acp-on-ibm-cloud-kvm.md
+    - Explore ODF persistent storage: tutorials/explore-odf-storage.md
   - How-To Guides:
-    - docs/how-to/index.md
-    - Deploy ODF on KVM: docs/how-to/deploy-odf-on-kvm.md
-    - Configure ZeroSSL TLS: docs/how-to/configure-zerossl-tls.md
-    - Run post-install pipeline: docs/how-to/run-post-install-pipeline.md
-    - Expand VM RAM: docs/how-to/expand-vm-ram.md
-    - Deploy on bare-metal: docs/how-to/deploy-on-bare-metal.md
-    - Resolve ODF Multus macvlan: docs/how-to/resolve-odf-multus-kvm.md
-    - Resolve ansible_user undefined: docs/how-to/resolve-ansible-user-undefined.md
-    - Resolve certmanager apiVersion: docs/how-to/resolve-certmanager-apiversion.md
-    - Resolve kubeconfig stale CA: docs/how-to/resolve-kubeconfig-stale-ca.md
+    - how-to/index.md
+    - Deploy ODF on KVM: how-to/deploy-odf-on-kvm.md
+    - Configure ZeroSSL TLS: how-to/configure-zerossl-tls.md
+    - Run post-install pipeline: how-to/run-post-install-pipeline.md
+    - Expand VM RAM: how-to/expand-vm-ram.md
+    - Deploy on bare-metal: how-to/deploy-on-bare-metal.md
+    - Resolve ODF Multus macvlan: how-to/resolve-odf-multus-kvm.md
+    - Resolve ansible_user undefined: how-to/resolve-ansible-user-undefined.md
+    - Resolve certmanager apiVersion: how-to/resolve-certmanager-apiversion.md
+    - Resolve kubeconfig stale CA: how-to/resolve-kubeconfig-stale-ca.md
   - Reference:
-    - docs/reference/index.md
-    - extra-vars.yml parameters: docs/reference/extra-vars.md
-    - hack/ scripts: docs/reference/hack-scripts.md
-    - Ansible playbooks: docs/reference/playbooks.md
-    - ADR index: docs/reference/adrs.md
+    - reference/index.md
+    - extra-vars.yml parameters: reference/extra-vars.md
+    - hack/ scripts: reference/hack-scripts.md
+    - Ansible playbooks: reference/playbooks.md
+    - ADR index: reference/adrs.md
   - Explanation:
-    - docs/explanation/index.md
-    - Architecture overview: docs/explanation/architecture-overview.md
-    - Deployment pipeline: docs/explanation/deployment-pipeline.md
-    - KVM vs bare-metal: docs/explanation/kvm-vs-baremetal.md
-    - ODF storage design: docs/explanation/odf-storage-design.md
-    - Why Ansible?: docs/explanation/why-ansible.md
+    - explanation/index.md
+    - Architecture overview: explanation/architecture-overview.md
+    - Deployment pipeline: explanation/deployment-pipeline.md
+    - KVM vs bare-metal: explanation/kvm-vs-baremetal.md
+    - ODF storage design: explanation/odf-storage-design.md
+    - Why Ansible?: explanation/why-ansible.md
   - ADRs:
-    - docs/adrs/README.md
+    - adrs/README.md
+    - ADR-0001 Ansible: adrs/adr-0001-use-ansible-as-primary-automation-tool.md
+    - ADR-0002 Agent ISO: adrs/adr-0002-agent-based-openshift-installation-via-iso.md
+    - ADR-0003 Helper node: adrs/adr-0003-helper-node-centric-deployment-model.md
+    - ADR-0004 HA/non-HA: adrs/adr-0004-support-ha-and-non-ha-cluster-architecture-modes.md
+    - ADR-0005 ODF+Multus: adrs/adr-0005-odf-on-local-nvme-with-multus-storage-network.md
+    - ADR-0006 OLM pattern: adrs/adr-0006-operator-driven-post-install-configuration-via-olm.md
+    - ADR-0007 Connected cluster: adrs/adr-0007-connected-cluster-with-red-hat-operator-catalog.md
+    - ADR-0008 BIND DNS: adrs/adr-0008-optional-bind-in-podman-for-lab-dns.md
+    - ADR-0009 ZeroSSL TLS: adrs/adr-0009-zerossl-cert-manager-dns01-tls.md
+    - ADR-0010 AAP DCN: adrs/adr-0010-aap-as-acp-dcn-management-layer.md
+    - ADR-0011 OCP 4.13: adrs/adr-0011-openshift-version-pinned-to-4-13.md
+    - ADR-0012 OVN-K: adrs/adr-0012-ovn-kubernetes-cni-nmstate-bonded-interfaces.md
+    - ADR-0013 OCP 4.21: adrs/adr-0013-update-openshift-version-track-to-4-21.md
+    - ADR-0014 IBM Cloud KVM: adrs/adr-0014-ibm-cloud-bare-metal-as-kvm-host-and-helper.md
+    - ADR-0015 HAProxy: adrs/adr-0015-haproxy-external-access-ibm-cloud.md
+    - ADR-0016 Route53: adrs/adr-0016-route53-external-dns-ibm-cloud.md
+    - ADR-0017 dnsmasq: adrs/adr-0017-dnsmasq-internal-kvm-cluster-dns.md
+    - ADR-0018 DNS gate: adrs/adr-0018-mandatory-dns-verification-gate.md
+    - ADR-0019 VyOS: adrs/adr-0019-cockpit-vyos-console-management.md
+  - Hardening Reports:
+    - hardening/odf-multus-kvm-v4.21-2026-06-04.md
+    - hardening/post-install-pipeline-v4.21-2026-06-04.md
   - Release Notes:
-    - v4.21.0: docs/releases/v4.21.0.md
-  - CHANGELOG: CHANGELOG.md
+    - releases/v4.21.0.md

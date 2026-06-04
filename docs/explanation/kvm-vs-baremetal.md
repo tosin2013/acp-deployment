@@ -100,7 +100,7 @@ Because bare-metal hardware varies so much between sites, the bare-metal path im
 - An unusual NIC configuration (SR-IOV, single NIC, mixed bonding modes)
 - An air-gapped or restricted network environment
 
-...please share your working `extra-vars.yml` and `nodes.yml` (with credentials removed) as a new example directory. See [CONTRIBUTING.md](../../CONTRIBUTING.md) for how.
+...please share your working `extra-vars.yml` and `nodes.yml` (with credentials removed) as a new example directory. See [CONTRIBUTING.md](https://github.com/tosin2013/acp-deployment/blob/main/CONTRIBUTING.md) for how.
 
 ---
 

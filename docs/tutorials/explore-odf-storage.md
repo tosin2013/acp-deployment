@@ -263,6 +263,6 @@ oc delete project storage-tutorial
 
 ## Next steps
 
-- [How to deploy ODF storage on a KVM cluster](../how-to/deploy-odf-kvm.md)
+- [How to deploy ODF storage on a KVM cluster](../how-to/deploy-odf-on-kvm.md)
 - [Understanding ODF storage design](../explanation/odf-storage-design.md)
 - [Reference: extra-vars.yml configuration](../reference/extra-vars.md)
