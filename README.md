@@ -97,7 +97,17 @@ See: [`docs/kvm-developer-guide.md`](docs/kvm-developer-guide.md), ADR-0014 thro
 
 ### Bare-Metal Direct
 
-OpenShift installs directly on physical servers via Agent-Based Installer.
+OpenShift installs directly on physical servers via Agent-Based Installer booted from the agent ISO
+using Redfish virtual media (iDRAC 9+, iLO 5+, Supermicro BMC, AMI MegaRAC).
+
+```
+Physical server rack
+├── control-0  (physical, bond0 + bond1)
+├── control-1  (physical, bond0 + bond1)
+├── control-2  (physical, bond0 + bond1)
+└── helper     (separate server or VM running Ansible + ISO HTTP server)
+```
+
 See: [`examples/bare-metal-converged/`](examples/bare-metal-converged/), [`hack/deploy-on-baremetal.sh`](hack/deploy-on-baremetal.sh).
 
 ---
@@ -204,6 +214,108 @@ export KUBECONFIG=~/cluster_acp/install/auth/kubeconfig
 oc get nodes
 oc get storagecluster -n openshift-storage
 oc get hyperconverged -n openshift-cnv
+```
+
+---
+
+## Quick Start — Bare-Metal Direct
+
+### Prerequisites
+
+- 3 physical servers with Redfish-capable BMC (iDRAC 9+, iLO 5+, Supermicro BMC, or AMI MegaRAC)
+- Separate helper host (RHEL 9 / CentOS Stream 10) on the same network
+- Red Hat pull secret from [console.redhat.com](https://console.redhat.com/openshift/install/pull-secret)
+- Layer 2 switch with LACP (for bonded NIC configuration)
+- Optional: Route53 + ZeroSSL for automated TLS (same as IBM Cloud path)
+
+### Hardware per Node (reference configuration)
+
+| Resource | Spec |
+|----------|------|
+| CPU | 2× Intel Xeon Silver (24+ cores total) |
+| RAM | 256 GiB DDR4 ECC |
+| OS disk | 1× NVMe 960 GiB |
+| ODF disks | 2× NVMe 3.84 TiB |
+| NICs | 2× 25 GbE (bond0, provisioning) + 2× 10 GbE (bond1, ODF storage) |
+| BMC | iDRAC 9 / iLO 5 / AMI MegaRAC |
+
+> Note: `odf_use_multus: true` is the default for bare-metal (bond1 acts as the dedicated
+> Multus storage network). This is the opposite of the KVM path.
+
+### 1. Prepare the helper node
+
+```bash
+git clone https://github.com/tosin2013/acp-deployment.git
+cd acp-deployment
+./hack/bootstrap.sh
+```
+
+### 2. Configure for bare-metal
+
+```bash
+# Select the bare-metal HA topology
+./hack/select-cluster-topology.sh bare-metal-converged
+
+./hack/setup-cluster-vars.sh
+
+# Fill placeholders in extra-vars.yml (MACs, IPs, domain, BMC addresses)
+vi examples/bare-metal-converged/extra-vars.yml
+
+# Fill BMC addresses and credentials in nodes.yml
+vi examples/bare-metal-converged/nodes.yml
+```
+
+Key differences from KVM in `extra-vars.yml`:
+
+```yaml
+# DNS is handled by BIND-in-Podman on the helper (not dnsmasq/Route53)
+external_dns: false
+
+# Multus IS used on bare-metal (dedicated bond1 storage network)
+# odf_use_multus defaults to true — do NOT set it to false
+
+all_node_settings:
+  storage_interface: bond1           # physical NIC bond for ODF traffic
+  storage_network: 192.168.100.0/24  # dedicated storage CIDR
+```
+
+### 3. Generate the install ISO
+
+```bash
+ansible-playbook playbooks/create-installation-media.yml \
+  -i examples/bare-metal-converged/inventory.yml \
+  -e @examples/bare-metal-converged/extra-vars.yml
+```
+
+### 4. Boot nodes from the ISO via Redfish
+
+```bash
+export BAREMETAL_BMC_PASSWORD=<your-bmc-password>
+
+./hack/deploy-on-baremetal.sh \
+  --nodes examples/bare-metal-converged/nodes.yml \
+  --iso ~/cluster_acp/install/agent.x86_64.iso
+```
+
+This mounts the ISO as Redfish virtual media and sets a one-time boot from CD-ROM.
+Nodes will boot, install RHCOS, and join the cluster automatically.
+
+### 5. Monitor installation and run post-install
+
+```bash
+export KUBECONFIG=~/cluster_acp/install/auth/kubeconfig
+
+# Watch install progress
+openshift-install agent wait-for install-complete \
+  --dir ~/cluster_acp/install --log-level debug
+
+# Enable workload scheduling on control nodes (converged topology)
+./hack/configure-converged-scheduling.sh
+
+# Post-install services
+ansible-playbook playbooks/site-post-install.yml \
+  -i examples/bare-metal-converged/inventory.yml \
+  -e @examples/bare-metal-converged/extra-vars.yml
 ```
 
 ---
