@@ -1,0 +1,23 @@
+---
+# Ansible collection dependencies for ACP deployment
+# Install with: ansible-galaxy collection install -r playbooks/collections/requirements.yml
+#
+# Prerequisites:
+#   - ansible.cfg must have a valid Automation Hub token for redhat.openshift
+#   - Get your token at: https://console.redhat.com/ansible/automation-hub/token
+#   - Set it in ansible.cfg [galaxy_server.automation_hub] token= field
+#   - Or export: export ANSIBLE_GALAXY_SERVER_AUTOMATION_HUB_TOKEN=<token>
+#
+# Collections and where they are used:
+#   redhat.openshift   — k8s module for OCP resource management (AAP, ODF, cert-manager, LSO, Virtualization roles)
+#   kubernetes.core    — dependency of redhat.openshift; also used directly
+#   containers.podman  — BIND DNS container management (dns.yml playbook)
+#   amazon.aws         — Route53 DNS-01 challenge for cert-manager TLS
+collections:
+  - name: redhat.openshift
+  - name: kubernetes.core
+    version: ">=3.0.0"
+  - name: containers.podman
+    version: ">=1.11.0"
+  - name: amazon.aws
+    version: ">=7.0.0"

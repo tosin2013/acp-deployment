@@ -53,7 +53,10 @@ _volume_set:
     storageClassName: local-disks
     volumeMode: Block
     deviceInclusionSpec:
-      deviceTypes: 
+      deviceTypes:
         - disk
+      # Include both NonRotational (bare-metal NVMe/SSD) and Rotational (KVM qcow2 virtio disks).
+      # KVM virtual disks appear as Rotational regardless of underlying storage.
       deviceMechanicalProperties:
         - NonRotational
+        - Rotational

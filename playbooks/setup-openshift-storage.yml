@@ -4,7 +4,10 @@
   hosts:
     - helper
   vars:
-    install_dir: "/home/{{ ansible_user }}/cluster_{{ openshift.cluster_name }}/install"
+    # ansible_user is not auto-populated for local connections (ansible_connection: local).
+    # Use ansible_user_id as a fallback — it is always set by fact gathering.
+    # See ADR-0003 amendment 2026-06-04.
+    install_dir: "/home/{{ ansible_user | default(ansible_user_id) }}/cluster_{{ openshift.cluster_name }}/install"
   module_defaults:
     redhat.openshift.k8s:
       kubeconfig: "{{ install_dir }}/auth/kubeconfig"
@@ -16,6 +19,32 @@
     - name: Install kuebernetes python library
       ansible.builtin.pip:
         name: kubernetes
+
+    # ── ODF preflight guard ────────────────────────────────────────────────────
+    # KVM virtio interfaces do not support macvlan (Linux rejects macvlan on tun
+    # devices). Running ODF with odf_use_multus: true on KVM causes Ceph mon/osd
+    # pods to fail with "Link not found" from the Multus CNI shim.
+    # This guard fails fast with an actionable message instead of a 10-minute
+    # StorageCluster-stuck-Progressing timeout.
+    - name: Detect KVM virtualisation environment
+      ansible.builtin.command: systemd-detect-virt
+      register: _virt_type
+      changed_when: false
+      failed_when: false
+      become: true
+
+    - name: Fail if odf_use_multus is true on a KVM host
+      ansible.builtin.fail:
+        msg: >-
+          PREFLIGHT FAIL: odf_use_multus is true but this host is KVM
+          (detected: {{ _virt_type.stdout }}). KVM virtio interfaces do not
+          support macvlan. Set odf_use_multus: false in
+          openshift.all_node_settings in your extra-vars.yml.
+          See docs/adrs/adr-0005-odf-on-local-nvme-with-multus-storage-network.md.
+      when:
+        - openshift.all_node_settings.odf_use_multus | default(false) | bool
+        - _virt_type.stdout is defined
+        - "'kvm' in _virt_type.stdout"
   roles:
     - ../roles/openshift_local_storage
   tasks:

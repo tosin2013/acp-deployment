@@ -25,13 +25,11 @@ _subscription:
     name: odf-operator
     namespace: openshift-storage
   spec:
-    # This should be from openshift.version
-    channel: "stable-4.13"
+    channel: "stable-4.21"
     installPlanApproval: Automatic
     name: odf-operator
     source: redhat-operators
     sourceNamespace: openshift-marketplace
-    startingCSV: odf-operator.v4.13.2-rhodf
 
 _network_attachment_definitions_config:
   cniVersion: '0.3.1'
@@ -63,7 +61,15 @@ _storage_system:
     kind: storagecluster.ocs.openshift.io/v1
 
 
-_storage_cluster:
+# Multus network block — merged into StorageCluster spec only when odf_use_multus: true.
+# Defined separately so combine() can conditionally add it without the omit workaround.
+_storage_cluster_multus_network:
+  provider: multus
+  selectors:
+    cluster: openshift-storage/ocs-public-cluster
+    public: openshift-storage/ocs-public-cluster
+
+_storage_cluster_base:
   apiVersion: ocs.openshift.io/v1
   kind: StorageCluster
   metadata:
@@ -76,7 +82,10 @@ _storage_cluster:
   spec:
     storageDeviceSets:
       - config: {}
-        count: 12
+        # odf_device_count: total ODF disks across all nodes (disks_per_node × node_count).
+        # KVM default: 2 disks × 3 nodes = 6. Bare-metal with NVMe: set odf_device_count accordingly.
+        # | int ensures Ansible passes an integer, not a string, to the OCS API.
+        count: "{{ openshift.all_node_settings.odf_device_count | default(6) | int }}"
         dataPVCTemplate:
           spec:
             accessModes:
@@ -89,12 +98,11 @@ _storage_cluster:
         name: ocs-deviceset-local-disks
         replica: 1
     monDataDirHostPath: /var/lib/rook
-    network:
-      provider: multus
-      selectors:
-        cluster: openshift-storage/ocs-public-cluster
-        public: openshift-storage/ocs-public-cluster
     externalStorage: {}
     flexibleScaling: true
     failureDomain: host
     failureDomainKey: kubernetes.io/hostname
+
+# _storage_cluster is built in tasks/main.yml via set_fact using combine() so the
+# network block is only present when odf_use_multus: true (bare-metal bond0).
+_storage_cluster: "{{ _storage_cluster_base }}"

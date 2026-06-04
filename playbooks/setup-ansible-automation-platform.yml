@@ -4,7 +4,10 @@
   hosts:
     - helper
   vars:
-    install_dir: "/home/{{ ansible_user }}/cluster_{{ openshift.cluster_name }}/install"
+    # ansible_user is not auto-populated for local connections (ansible_connection: local).
+    # Use ansible_user_id as a fallback — it is always set by fact gathering.
+    # See ADR-0003 amendment 2026-06-04.
+    install_dir: "/home/{{ ansible_user | default(ansible_user_id) }}/cluster_{{ openshift.cluster_name }}/install"
   module_defaults:
     redhat.openshift.k8s:
       kubeconfig: "{{ install_dir }}/auth/kubeconfig"

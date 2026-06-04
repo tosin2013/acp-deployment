@@ -1,88 +1,290 @@
 # Advanced Computing Platform Deployment Automation
-This repository is designed to help the deployment of ACPs via automation, and to be a general reference for deployment. The idea is that anyone with some knowledge of OCP should be able to leverage this repository to build an ACP.
 
-This respository is very much a work in progress, and represents an opinionated view on how to build an ACP. Feedback and contributions are welcome.
+[![Version](https://img.shields.io/badge/version-v4.21.0-blue)](https://github.com/tosin2013/acp-deployment/releases/tag/v4.21.0)
+[![OCP](https://img.shields.io/badge/OpenShift-4.21-red)](https://docs.openshift.com/container-platform/4.21/)
+[![License](https://img.shields.io/badge/license-Apache%202.0-green)](LICENSE)
+
+Ansible-first automation toolkit for deploying an **Advanced Computing Platform (ACP)** reference implementation on Red Hat OpenShift Container Platform. Covers full cluster lifecycle: KVM host preparation, cluster installation via Agent-Based Installer, and complete post-install platform service deployment.
+
+> This repository represents an opinionated, validated reference implementation. Feedback and contributions are welcome.
+
+---
 
 ## Terminology
-- ACP: **A**dvanced **C**omputing **P**latform, a component of the [OPAF](https://www.opengroup.org/forum/open-process-automation-forum) architecture
-- Testbed: An implimentation of an ACP to be used for testing and evaluation of industrial/realtime workloads
-- DCN: **D**istributed **C**ontrol **N**ode, a small, purpose built device, also part of the [OPAF](https://www.opengroup.org/forum/open-process-automation-forum) architecture, outside of the scope of this repository, except for the management pieces which will run on an ACP
 
-## OPAF Architecture
+| Term | Definition |
+|------|-----------|
+| **ACP** | Advanced Computing Platform — a component of the [OPAF](https://www.opengroup.org/forum/open-process-automation-forum) architecture |
+| **DCN** | Distributed Control Node — small purpose-built device managed by the ACP |
+| **Testbed** | An ACP implementation used for testing and evaluation of industrial/realtime workloads |
+| **Helper** | The Linux host that runs all Ansible playbooks and serves as the deployment control node |
+
+---
+
+## Architecture
+
 ![OPAF Architecture](images/testbed-architecture.jpg)
 
-> **Note **
->
->  Our scope is the ‘Advanced Computing Platform’, located in the top left of this slide.
+This repository covers the **Advanced Computing Platform** (top left of the OPAF diagram). Two deployment topologies are supported:
 
-## Highly Available vs. Non-Highly Available Architectures
-ACPs will come in two flavors: highly available and non highly available. HA implementations will leverage 3-node OpenShift, non-HA implementations will leverage single node OpenShift.
+| Topology | Nodes | ODF | Use case |
+|----------|-------|-----|---------|
+| **HA (converged)** | 3 control-plane nodes also running workloads | Yes | Full ACP testbed |
+| **Non-HA (SNO)** | 1 single-node OpenShift | No | Development / edge evaluation |
 
-In addition, a large implementation will be included later, which will separate the control and compute planes, however this is out of scope for now.
+---
 
+## Platform Services Deployed
 
-## Hardware Recommendations
-These are hardware recommendations, ensure you scale up based on application load, and down if there are compute/cooling constraints.
+| Service | Version | Role |
+|---------|---------|------|
+| OpenShift Container Platform | 4.21.x | Container orchestration |
+| OpenShift Data Foundation (ODF) | 4.21 | Block, file, and object storage |
+| cert-manager + ZeroSSL | v1.19.0 | Automated TLS for ingress and API |
+| OpenShift Pipelines (Tekton) | v1.22.x | CI/CD pipelines |
+| Ansible Automation Platform | 2.6.x | DCN management and automation |
+| OpenShift Virtualization (KubeVirt) | 4.21.x | VM workload support |
+| Local Storage Operator | 4.21 | NVMe/disk discovery for ODF |
 
-### Highly Available Hardware Recommendations
-3 x OCP-certified servers (Dell/HPE/Lenovo/Supermicro/OnLogic/Advantech/etc)
+---
+
+## Hardware Requirements
+
+### HA Deployment (Validated — v4.21.0)
+
+**3 × OCP nodes (IBM Cloud bare-metal or equivalent):**
+
+| Resource | Minimum | Recommended (with ODF + Virt) |
+|----------|---------|-------------------------------|
+| CPU | 8 cores / socket | 16+ cores |
+| RAM | 32 GiB | **48 GiB** per node |
+| OS disk | 120 GiB | 120 GiB (vda) |
+| ODF disks | 2 × 100 GiB | 2 × 100 GiB (vdb, vdc) |
+| NICs | 2 (minimum) | 4 (cluster + storage + app + BMC) |
+
+> **Note:** 48 GiB RAM per node is required when deploying ODF + OpenShift Virtualization together.
+> ODF MDS standby (6 GiB request) and NooBaa DB (4 GiB request) exceed the headroom on 32 GiB nodes.
+
+**IBM Cloud KVM host (bare-metal server hosting the VMs):**
+- Total RAM: 128 GiB minimum, 192 GiB recommended
+- Nested virtualisation enabled (required for OpenShift Virt on KVM)
+
+### Non-HA Deployment (SNO)
+
+- 1 × server: 16 cores, 32 GiB RAM, 120 GiB disk
+- No ODF (single-node does not meet ODF quorum requirements)
+
+---
+
+## Deployment Paths
+
+### IBM Cloud KVM (Validated — v4.21.0)
+
+The IBM Cloud bare-metal server acts as both KVM hypervisor and Ansible helper.
+OpenShift runs inside KVM VMs.
 
 ```
-1+ Socket(s)/8+ cores [1]
-32GB+ RAM
-3+ SSDs:
-- 1 x /sysroot
-- 2+ JBOD/Passthrough ODF
-2+ NVMe:
-- 1 x etcd
-- 1+ /var/lib/containers, /var/lib/kubernetes
-4+ 10Gbe NICs [2][3]
-- Pair for ODF traffic via Multus
-- 1 x cluster provisioning/APIs (OOB management)
-- 1 x specific application traffic/fieldnet connection
-1 1Gbe Out-of-band/BMC connection
-
-[1] Be sure to meet minimum requirements for ODF
-[2] Networks can be logically or physically segmented, the above is a general recommendation - evaluate failure requirements
-[3] 2 NICs minimum, 4 preferred, scale up as needed by workloads/segmentation
-[4] These are production recommendations, POCs/testing can be done with less hardware, but don’t “starve” OCP or your experience will be compromised
+IBM Cloud bare-metal
+├── KVM host (libvirt)
+│   ├── control-0 (48 GiB, 16 vCPU)
+│   ├── control-1 (48 GiB, 16 vCPU)
+│   ├── control-2 (48 GiB, 16 vCPU)
+│   └── vyos-router (4 GiB, VyOS 1.x)
+└── Ansible helper (runs on the bare-metal host itself)
 ```
 
-### Non-Highly Available Hardware Recommendations
-TO-DO
+See: [`docs/kvm-developer-guide.md`](docs/kvm-developer-guide.md), ADR-0014 through ADR-0019.
 
-## General Installation Procedure
-1. Setup DNS
-    * External DNS is perferred, ensure the appropriate [DNS](https://docs.openshift.com/container-platform/4.13/installing/installing_platform_agnostic/installing-platform-agnostic.html#installation-dns-user-infra_installing-platform-agnostic) configuration is performed
-    * For testing/example processes, a DNS playbook is provided that creates a container with BIND to serve DNS
-2. Setup DHCP
-    * This step is **optional**, static IP addresses can be assigned during install
-3. Setup [oc-mirror](https://docs.openshift.com/container-platform/4.13/installing/disconnected_install/installing-mirroring-disconnected.html#installing-mirroring-disconnected)
-    * This step is **optional**, being used for disconnected installs
-    * To-do: create `oc-mirror` automation
-4. Create installation media
-    * The [agent installer](https://docs.openshift.com/container-platform/4.13/installing/installing_with_agent_based_installer/preparing-to-install-with-agent-based-installer.html) is used in this repo to avoid needing a bootstrap node
-    * The installation media can be written to a USB flash drive and booted from
-    * Network based installation methods will be addressed in the future
-5. Install Red Hat OpenShift
-    * Generally takes 20-120 minutes, depending on hardware and connectivity
-    * `oc get co -w` can be used to monitor cluster installation progress
-    * To troubleshoot installation issues, review [this page](https://docs.openshift.com/container-platform/4.13/support/troubleshooting/troubleshooting-installations.html)
-6. Deploy [OpenShift Data Foundation](https://access.redhat.com/documentation/en-us/red_hat_openshift_data_foundation/4.13/html/deploying_openshift_data_foundation_using_bare_metal_infrastructure/index)
-7. Deploy [OpenShift Pipelines](https://docs.openshift.com/container-platform/4.13/cicd/pipelines/understanding-openshift-pipelines.html)
-8. Deploy [OpenShift Virtualization](https://docs.openshift.com/container-platform/4.13/virt/about-virt.html)
-9. Deploy [Ansible Automation Platform](https://access.redhat.com/documentation/en-us/red_hat_ansible_automation_platform/2.4/html/deploying_the_red_hat_ansible_automation_platform_operator_on_openshift_container_platform/index)
+### Bare-Metal Direct
 
-## Automation Approach
-Generally speaking, [Ansible](https://www.ansible.com/) is a approachable automation language that can be used to perform tasks against multiple types of targets, such as systems and kubernetes clusters.
+OpenShift installs directly on physical servers via Agent-Based Installer.
+See: [`examples/bare-metal-converged/`](examples/bare-metal-converged/), [`hack/deploy-on-baremetal.sh`](hack/deploy-on-baremetal.sh).
 
-## Automated Approach
-1. Populate a vars file
-    * An example vars file can be located [examples/extra-vars.yml](examples/extra-vars.yml)
-2. Populate an inventory file
-    * An example inventory file can be located at [examples/inventory.yml](https://www.ansible.com/)
-3. Run the appropriate playbooks
+---
 
-> **Note**
->
-> The 'helper' node is simply a system that can be used to generate installation media and, if desired, host mirrored content from `oc-mirror`. It can be a laptop, small form-factor device, etc.
+## Quick Start — IBM Cloud KVM
+
+### Prerequisites
+
+- IBM Cloud bare-metal server provisioned (RHEL 9 or CentOS Stream 10)
+- Red Hat pull secret from [console.redhat.com](https://console.redhat.com/openshift/install/pull-secret)
+- Route53 hosted zone (for external DNS and ZeroSSL DNS-01 TLS)
+- ZeroSSL account with EAB credentials from [zerossl.com/developer](https://app.zerossl.com/developer)
+- AWS IAM credentials with Route53 write access
+
+### 1. Prepare the KVM host
+
+```bash
+git clone https://github.com/tosin2013/acp-deployment.git
+cd acp-deployment
+
+# Install libvirt, QEMU, required packages
+./hack/bootstrap.sh
+
+# Install and configure KVM networking
+./hack/install-kvm-host.sh
+./hack/setup-libvirt-networks.sh
+```
+
+### 2. Configure your environment
+
+```bash
+# Select the IBM Cloud HA topology
+./hack/select-cluster-topology.sh ibm-cloud-converged
+
+# Populate SSH key and pull secret
+./hack/setup-cluster-vars.sh
+
+# Edit your environment-specific variables
+vi examples/ibm-cloud-active/extra-vars.yml
+```
+
+Key variables to set:
+
+```yaml
+# Cluster identity
+openshift:
+  cluster_name: acp
+  base_domain: sandbox3377.opentlc.com
+
+# Node MACs (generated below)
+# ZeroSSL EAB credentials
+zerossl_account:
+  email: you@example.com
+  kid: <EAB Key ID>
+  key: <EAB HMAC key>
+```
+
+### 3. Create and boot VMs
+
+```bash
+# Generate unique MAC addresses for your nodes
+./hack/generate-kvm-macs.sh
+
+# Create the VMs (48 GiB RAM default)
+./hack/deploy-kvm-vms.sh --iso /path/to/agent.x86_64.iso
+```
+
+### 4. Run the full deployment pipeline
+
+```bash
+# Run all steps: ISO creation → cluster install → post-install services
+./hack/deploy-cluster.sh \
+  -i examples/ibm-cloud-active/inventory.yml \
+  -e @examples/ibm-cloud-active/extra-vars.yml
+```
+
+Or run stages individually:
+
+```bash
+# 1. Generate and burn the Agent-Based Installer ISO
+ansible-playbook playbooks/create-installation-media.yml \
+  -i examples/ibm-cloud-active/inventory.yml \
+  -e @examples/ibm-cloud-active/extra-vars.yml
+
+# 2. Post-install services (storage → TLS → pipelines → AAP → virt)
+ansible-playbook playbooks/site-post-install.yml \
+  -i examples/ibm-cloud-active/inventory.yml \
+  -e @examples/ibm-cloud-active/extra-vars.yml
+```
+
+### 5. Validate
+
+```bash
+# Pre-storage preflight
+./hack/verify-odf-prerequisites.sh \
+  -e examples/ibm-cloud-active/extra-vars.yml
+
+# Pre-post-install preflight
+./hack/verify-post-install-prerequisites.sh \
+  -i examples/ibm-cloud-active/inventory.yml
+
+# Cluster status
+export KUBECONFIG=~/cluster_acp/install/auth/kubeconfig
+oc get nodes
+oc get storagecluster -n openshift-storage
+oc get hyperconverged -n openshift-cnv
+```
+
+---
+
+## Repository Structure
+
+```
+acp-deployment/
+├── hack/                    # Shell scripts (KVM host, VM lifecycle, validation)
+│   ├── deploy-cluster.sh    # Master 13-step deployment pipeline
+│   ├── deploy-kvm-vms.sh    # Create/destroy KVM VMs
+│   ├── verify-odf-prerequisites.sh
+│   └── verify-post-install-prerequisites.sh
+├── playbooks/               # Ansible playbooks
+│   ├── create-installation-media.yml
+│   ├── site-post-install.yml          # Master post-install (runs all below)
+│   ├── setup-openshift-storage.yml
+│   ├── update-ocp-ingress-cert.yml
+│   ├── setup-openshift-pipelines.yml
+│   ├── setup-ansible-automation-platform.yml
+│   └── setup-openshift-virtualization.yml
+├── roles/                   # Ansible roles (one per platform service)
+├── examples/                # Environment-specific variable files
+│   ├── ibm-cloud-converged/ # IBM Cloud KVM HA
+│   ├── ibm-cloud-sno/       # IBM Cloud KVM SNO
+│   ├── bare-metal-converged/
+│   └── bare-metal-sno/
+├── docs/
+│   ├── adrs/                # 19 Architectural Decision Records
+│   ├── hardening/           # Post-incident hardening reports
+│   ├── releases/            # Per-version release notes
+│   └── kvm-developer-guide.md
+├── CLAUDE.md                # AI agent guidance and known failure patterns
+└── CHANGELOG.md
+```
+
+---
+
+## Architectural Decision Records
+
+All key design decisions are documented in [`docs/adrs/`](docs/adrs/). Key ADRs for this release:
+
+| ADR | Title | Status |
+|-----|-------|--------|
+| [ADR-0001](docs/adrs/adr-0001-use-ansible-as-primary-automation-tool.md) | Ansible as primary automation tool | Accepted |
+| [ADR-0003](docs/adrs/adr-0003-helper-node-centric-deployment-model.md) | Helper-node deployment model | Accepted |
+| [ADR-0005](docs/adrs/adr-0005-odf-on-local-nvme-with-multus-storage-network.md) | ODF on local NVMe (KVM exception) | Accepted |
+| [ADR-0006](docs/adrs/adr-0006-operator-driven-post-install-configuration-via-olm.md) | OLM operator pattern | Accepted |
+| [ADR-0009](docs/adrs/adr-0009-zerossl-cert-manager-dns01-tls.md) | ZeroSSL + cert-manager TLS | Accepted |
+| [ADR-0013](docs/adrs/adr-0013-update-openshift-version-track-to-4-21.md) | OCP 4.21 version track | Accepted |
+| [ADR-0014](docs/adrs/adr-0014-ibm-cloud-bare-metal-as-kvm-host-and-helper.md) | IBM Cloud KVM host | Accepted |
+
+---
+
+## Known Limitations (v4.21.0)
+
+- **Nested virtualisation required:** OpenShift Virtualization on a KVM host requires nested KVM (`kvm_intel/kvm_amd` with nested=1). IBM Cloud bare-metal supports this; most cloud VMs do not.
+- **ODF not supported on SNO:** OpenShift Data Foundation requires 3 nodes for Ceph quorum. SNO deployments use no ODF.
+- **odf_use_multus must be false on KVM:** KVM virtio interfaces do not support macvlan. See ADR-0005 amendment.
+- **ZeroSSL EAB credentials required:** TLS automation requires a pre-created ZeroSSL account with External Account Binding credentials.
+
+---
+
+## Known Failure Patterns
+
+See [`CLAUDE.md`](CLAUDE.md) for a catalogue of failure patterns encountered during development and their fixes, including:
+- ODF macvlan/Multus incompatibility on KVM
+- `ansible_user` undefined for local connections
+- cert-manager `CertManager` CR wrong `apiVersion`
+
+---
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Run preflight checks: `./hack/verify-odf-prerequisites.sh` and `./hack/verify-post-install-prerequisites.sh`
+4. Submit a pull request
+
+---
+
+## License
+
+Apache License 2.0 — see [LICENSE](LICENSE).

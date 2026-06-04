@@ -2,3 +2,16 @@
 tmp/
 testing/
 .vscode
+
+# Local machine configs — contain tokens/credentials, never commit
+ansible.cfg
+hack/env.sh.local
+*.local
+
+# Extra-vars contain secrets (pull_secret, ssh_pub_key, ZeroSSL EAB keys) — never commit
+examples/ibm-cloud-converged/extra-vars.yml
+examples/ibm-cloud-sno/extra-vars.yml
+# Bare-metal examples: nodes.yml contains BMC passwords — never commit filled-in versions
+# extra-vars.yml contains pull_secret and ssh_pub_key once populated
+examples/bare-metal-converged/extra-vars.yml
+examples/bare-metal-sno/extra-vars.yml

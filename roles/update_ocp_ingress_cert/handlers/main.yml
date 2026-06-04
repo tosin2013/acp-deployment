@@ -19,7 +19,9 @@
 
 - name: Update KUBECONFIG
   ansible.builtin.lineinfile:
-    path: "/home/{{ ansible_user }}/.kube/config"
+    # ansible_user is not set for local connections; fall back to ansible_user_id
+    # (the OS user actually running Ansible — reliable for both SSH and local).
+    path: "/home/{{ ansible_user | default(ansible_user_id) }}/.kube/config"
     regexp: '^    certificate-authority-data'
     state: absent
   listen:

@@ -29,7 +29,9 @@ _subscription:
     name: openshift-cert-manager-operator
     source: redhat-operators
     sourceNamespace: openshift-marketplace
-    startingCSV: cert-manager-operator.v1.13.1
+    # startingCSV intentionally omitted — OLM selects the latest CSV on the channel.
+    # Pinning a specific CSV risks OLM failure when that version is rotated out of the
+    # stable-v1 catalog. See ADR-0013 amendment (June 2026).
 
 _ingresscontroller:
   apiVersion: operator.openshift.io/v1
@@ -42,7 +44,7 @@ _ingresscontroller:
       name: router-cert
 
 _certmanager:
-  apiVersion: acme.cert-manager.io/v1
+  apiVersion: operator.openshift.io/v1alpha1
   kind: CertManager
   metadata:
     name: cluster

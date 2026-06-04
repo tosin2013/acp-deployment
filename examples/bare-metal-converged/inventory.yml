@@ -1,0 +1,24 @@
+---
+# Bare-metal converged cluster inventory — dedicated RHEL helper node
+#
+# For bare-metal deployments, the helper node is a SEPARATE machine
+# (not the node being installed). This host:
+#   - Runs Ansible playbooks
+#   - Serves the agent ISO via HTTP during installation
+#   - Runs BIND-in-Podman for internal cluster DNS (ADR-0008)
+#   - Optionally runs HAProxy for API/ingress access
+#
+# Replace <HELPER_IP> with the IP of your RHEL helper server.
+# Ensure SSH key-based access is configured before running playbooks.
+#
+# Contrast with KVM examples (ibm-cloud-*) which use:
+#   ansible_host: localhost
+#   ansible_connection: local
+
+all:
+  hosts:
+    helper:
+      ansible_host: <HELPER_IP>       # e.g. 192.168.1.10
+      ansible_user: <HELPER_USER>     # e.g. ansible or root
+      ansible_ssh_private_key_file: ~/.ssh/id_ed25519
+      ansible_python_interpreter: /usr/bin/python3

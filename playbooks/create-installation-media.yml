@@ -4,7 +4,7 @@
   hosts:
     - helper
   vars:
-    install_dir: "/home/{{ ansible_user }}/cluster_{{ openshift.cluster_name }}/install"
+    install_dir: "{{ ansible_env.HOME }}/cluster_{{ openshift.cluster_name }}/install"
   pre_tasks:
     - name: Ensure nmstate is present
       ansible.builtin.package:

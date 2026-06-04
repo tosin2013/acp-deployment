@@ -1,0 +1,16 @@
+---
+# Bare-metal SNO cluster — BMC / Redfish node definition
+#
+# Single node only. Used by hack/deploy-on-baremetal.sh.
+#
+# Set BAREMETAL_BMC_PASSWORD in your environment to avoid storing passwords.
+
+nodes:
+  - name: master-0
+    bmc:
+      address: https://192.168.1.200    # iDRAC/iLO/BMC management IP
+      username: root
+      password: ""                       # leave blank — set BAREMETAL_BMC_PASSWORD env var
+      # redfish_path override (optional — see bare-metal-converged/nodes.yml for examples)
+    boot_iso_url: http://<HELPER_IP>:8080/agent.x86_64.iso
+    mac_address: b8:ca:3a:aa:bb:00      # Primary NIC MAC (fill from hardware label/BIOS)

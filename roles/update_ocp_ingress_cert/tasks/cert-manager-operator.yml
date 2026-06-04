@@ -11,3 +11,19 @@
 - name: Create subscription
   redhat.openshift.k8s:
     definition: "{{ _subscription }}"
+
+# OLM takes 60-120 s to pull and install the operator after the Subscription is created.
+# Wait for the CSV to reach Succeeded before attempting to create cert-manager CRs —
+# otherwise the CertManager CRD (acme.cert-manager.io/v1) does not yet exist and the
+# next task fails with "Failed to find exact match for acme.cert-manager.io/v1.CertManager".
+- name: Wait for cert-manager-operator CSV to succeed
+  kubernetes.core.k8s_info:
+    api_version: operators.coreos.com/v1alpha1
+    kind: ClusterServiceVersion
+    namespace: cert-manager-operator
+  register: _cert_manager_csv
+  retries: 30
+  delay: 15
+  until:
+    - _cert_manager_csv.resources | length > 0
+    - _cert_manager_csv.resources | selectattr('status.phase', 'equalto', 'Succeeded') | list | length > 0

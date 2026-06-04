@@ -23,11 +23,11 @@ hosts:
 {%   if interface.mac_address is defined %}
           mac-address: {{ interface.mac_address }}
 {%   endif %}
-{%   if interface.ipv4 is defined %}
+{%   if interface.ipv4 is defined and interface.ipv4 %}
           ipv4:
             enabled: true
             dhcp: {{ interface.ipv4.dhcp | default('false') | string | lower }}
-{%    if interface.ipv4.dhcp is not defined or not interface.ipv4.dhcp %}
+{%    if interface.ipv4.address is defined %}
             address:
 {%     for address in interface.ipv4.address %}
               - ip: {{ address.ip }}

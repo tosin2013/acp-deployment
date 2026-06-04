@@ -1,0 +1,60 @@
+---
+# =============================================================================
+# playbooks/site-post-install.yml
+# =============================================================================
+# Master post-install playbook — runs all post-install playbooks in the
+# correct dependency order after OpenShift installation completes.
+#
+# Prerequisites:
+#   export KUBECONFIG=~/cluster_acp/install/auth/kubeconfig
+#   # For cert-manager (Route53 DNS-01):
+#   export AWS_ACCESS_KEY_ID=$(aws configure get aws_access_key_id)
+#   export AWS_SECRET_ACCESS_KEY=$(aws configure get aws_secret_access_key)
+#
+# Usage:
+#   ansible-playbook playbooks/site-post-install.yml \
+#     -i examples/ibm-cloud-active/inventory.yml \
+#     -e @examples/ibm-cloud-active/extra-vars.yml
+#
+# Dependency order:
+#   1. setup-openshift-storage.yml    — LSO + ODF; MUST run first (AAP needs PVCs)
+#   2. update-ocp-ingress-cert.yml    — cert-manager + ZeroSSL TLS for ingress/API
+#   3. setup-openshift-pipelines.yml  — Tekton Pipelines operator
+#   4. setup-ansible-automation-platform.yml — AAP (needs ODF storage class)
+#   5. setup-openshift-virtualization.yml    — KubeVirt (optional, controlled by
+#                                              install_openshift_virtualization var)
+#
+# Topology notes:
+#   Converged: All operators supported. ODF requires 3 nodes.
+#   SNO:       ODF not installed (architecture: non-HA). cert-manager, pipelines,
+#              and AAP will attempt to run but AAP needs persistent storage —
+#              configure an NFS or hostPath StorageClass before running AAP on SNO.
+# =============================================================================
+
+- import_playbook: setup-openshift-storage.yml
+
+# cert-manager is skippable when ZeroSSL EAB credentials are not yet configured.
+# Pass -e skip_cert_manager=true to bypass. The gate lives in update-ocp-ingress-cert.yml.
+- import_playbook: update-ocp-ingress-cert.yml
+
+- import_playbook: setup-openshift-pipelines.yml
+
+- import_playbook: setup-ansible-automation-platform.yml
+
+# OpenShift Virtualization is optional — controlled by install_openshift_virtualization
+# variable in your extra-vars.yml. Set to true only when sufficient RAM is available:
+#   Converged: >= 128 GB RAM total  |  SNO: >= 48 GB RAM total
+- name: Conditionally run OpenShift Virtualization
+  hosts: helper
+  gather_facts: false
+  vars:
+    # ansible_user is not auto-populated for local connections (ansible_connection: local).
+    # Use ansible_user_id as a fallback — it is always set by fact gathering.
+    # See ADR-0003 amendment 2026-06-04.
+    install_dir: "/home/{{ ansible_user | default(ansible_user_id) }}/cluster_{{ openshift.cluster_name }}/install"
+  module_defaults:
+    redhat.openshift.k8s:
+      kubeconfig: "{{ install_dir }}/auth/kubeconfig"
+  roles:
+    - role: "{{ playbook_dir }}/../roles/openshift_virtualization"
+      when: install_openshift_virtualization | default(false) | bool

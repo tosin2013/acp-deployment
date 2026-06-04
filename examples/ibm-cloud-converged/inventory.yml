@@ -1,0 +1,14 @@
+---
+# IBM Cloud KVM inventory — helper is this machine (localhost)
+# The IBM Cloud bare-metal server acts as both KVM host and Ansible helper.
+# Ansible runs locally (ansible_connection: local) without an SSH hop.
+
+all:
+  hosts:
+    helper:
+      ansible_host: localhost
+      ansible_connection: local
+      ansible_python_interpreter: /usr/bin/python3
+      # ansible_user is not auto-populated for local connections; set it explicitly
+      # so that playbooks using /home/{{ ansible_user }}/... paths resolve correctly.
+      ansible_user: "{{ lookup('env', 'USER') }}"

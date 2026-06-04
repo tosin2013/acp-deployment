@@ -3,5 +3,9 @@
 - name: Update OCP ingress cert
   hosts:
     - helper
+  pre_tasks:
+    - name: Skip cert-manager when skip_cert_manager=true
+      ansible.builtin.meta: end_play
+      when: skip_cert_manager | default(false) | bool
   roles:
     - ../roles/update_ocp_ingress_cert

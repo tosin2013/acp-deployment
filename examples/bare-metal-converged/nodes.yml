@@ -1,0 +1,48 @@
+---
+# Bare-metal converged cluster — BMC / Redfish node definitions
+#
+# Used by hack/deploy-on-baremetal.sh to:
+#   1. Mount the agent ISO as virtual media on each node's BMC
+#   2. Set one-time boot from virtual CD-ROM
+#   3. Power on each node
+#
+# Supported BMC types: Redfish (iDRAC 9+, iLO 5+, Supermicro BMC, AMI MegaRAC)
+#
+# Credential note:
+#   Set BAREMETAL_BMC_PASSWORD in your environment to avoid storing passwords here.
+#   Per-node `bmc.password` fields override the environment variable.
+#
+# ISO URL note:
+#   hack/deploy-on-baremetal.sh serves the ISO via a temporary HTTP server on
+#   the helper node. Replace <HELPER_IP> with your helper node's IP address.
+#   The port (8080) must be reachable from the BMC network.
+
+nodes:
+  - name: control-0
+    bmc:
+      address: https://192.168.1.200    # iDRAC/iLO/BMC management IP
+      username: root
+      password: ""                       # leave blank — set BAREMETAL_BMC_PASSWORD env var
+      # redfish_path override (optional):
+      #   Default: /redfish/v1/Managers/iDRAC.Embedded.1/VirtualMedia/CD
+      #   Dell iDRAC:     /redfish/v1/Managers/iDRAC.Embedded.1/VirtualMedia/CD
+      #   HPE iLO:        /redfish/v1/Managers/1/VirtualMedia/2
+      #   Supermicro:     /redfish/v1/Managers/1/VirtualMedia/1
+    boot_iso_url: http://<HELPER_IP>:8080/agent.x86_64.iso
+    mac_address: b8:ca:3a:aa:bb:00      # Primary NIC MAC (fill from hardware label/BIOS)
+
+  - name: control-1
+    bmc:
+      address: https://192.168.1.201
+      username: root
+      password: ""
+    boot_iso_url: http://<HELPER_IP>:8080/agent.x86_64.iso
+    mac_address: b8:ca:3a:aa:bb:01
+
+  - name: control-2
+    bmc:
+      address: https://192.168.1.202
+      username: root
+      password: ""
+    boot_iso_url: http://<HELPER_IP>:8080/agent.x86_64.iso
+    mac_address: b8:ca:3a:aa:bb:02

@@ -37,10 +37,29 @@
 - name: Create NADs
   redhat.openshift.k8s:
     definition: "{{ _network_attachment_definitions }}"
+  when: openshift.all_node_settings.odf_use_multus | default(false)
+
+# Build final StorageCluster definition: add Multus network block only for bare-metal.
+# Using set_fact + combine() avoids the Ansible omit-in-dict limitation (omit only
+# works as a direct module parameter, not inside nested dict values).
+- name: Build StorageCluster definition (with or without Multus network)
+  ansible.builtin.set_fact:
+    _storage_cluster_final: >-
+      {{ _storage_cluster_base | combine({'spec': _storage_cluster_base.spec | combine({'network': _storage_cluster_multus_network})}, recursive=true)
+         if openshift.all_node_settings.odf_use_multus | default(false)
+         else _storage_cluster_base }}
 
 - name: Create StorageCluster
   redhat.openshift.k8s:
-    definition: "{{ _storage_cluster }}"
+    # Force count to int here — Ansible coerces template results to string when nested
+    # inside combine() expressions (the template "{{ x | int }}" becomes "6" not 6).
+    # Overriding count at the module call site ensures the API receives an integer.
+    definition: >-
+      {{ _storage_cluster_final | combine({'spec': {'storageDeviceSets':
+        [_storage_cluster_final.spec.storageDeviceSets[0] | combine(
+          {'count': openshift.all_node_settings.odf_device_count | default(6) | int}
+        )]
+      }}, recursive=true) }}
   register: _instance_deploy
   until:
     - not _instance_deploy.failed
@@ -56,8 +75,26 @@
 #       spec:
 #         plugins: ["odf-console"]
 
+# Wait for ODF to create the StorageClass before patching it.
+# The k8s module cannot CREATE a StorageClass without a provisioner field,
+# so we must wait for ODF to create ocs-storagecluster-ceph-rbd first,
+# then patch it to set the default annotation.
+- name: Wait for ocs-storagecluster-ceph-rbd StorageClass to exist
+  kubernetes.core.k8s_info:
+    api_version: storage.k8s.io/v1
+    kind: StorageClass
+    name: ocs-storagecluster-ceph-rbd
+  register: _sc_info
+  until:
+    - _sc_info.resources | length > 0
+    - _sc_info.resources[0].provisioner is defined
+    - _sc_info.resources[0].provisioner != ""
+  retries: 40
+  delay: 30
+
 - name: Set default storage class for cluster
   redhat.openshift.k8s:
+    state: patched
     definition:
       kind: StorageClass
       apiVersion: storage.k8s.io/v1
