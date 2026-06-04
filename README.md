@@ -4,9 +4,27 @@
 [![OCP](https://img.shields.io/badge/OpenShift-4.21-red)](https://docs.openshift.com/container-platform/4.21/)
 [![License](https://img.shields.io/badge/license-Apache%202.0-green)](LICENSE)
 
-Ansible-first automation toolkit for deploying an **Advanced Computing Platform (ACP)** reference implementation on Red Hat OpenShift Container Platform. Covers full cluster lifecycle: KVM host preparation, cluster installation via Agent-Based Installer, and complete post-install platform service deployment.
+Ansible-first automation toolkit for deploying an **Advanced Computing Platform (ACP)** reference implementation on Red Hat OpenShift Container Platform. Covers full cluster lifecycle: KVM host preparation or bare-metal provisioning via Redfish, cluster installation via Agent-Based Installer, and complete post-install platform service deployment.
 
-> This repository represents an opinionated, validated reference implementation. Feedback and contributions are welcome.
+> This repository represents an opinionated, validated reference implementation. **Community contributions are welcome** — especially for bare-metal, where hardware environments vary widely. See [CONTRIBUTING.md](CONTRIBUTING.md).
+
+---
+
+## Choose your deployment path
+
+There are two paths through this repository. Pick the one that matches your situation:
+
+| Path | Use when | Infrastructure |
+|------|---------|---------------|
+| 🖥️ **[KVM on IBM Cloud](#quick-start--ibm-cloud-kvm)** | You want to **test, develop, or learn** ACP deployment quickly without owning physical servers | IBM Cloud bare-metal server running KVM VMs |
+| 🔩 **[Bare-Metal Direct](#quick-start--bare-metal-direct)** | You are deploying ACP to an **edge facility or production site** | Physical servers with Redfish BMC (iDRAC, iLO, MegaRAC) |
+
+Both paths support **Converged (3-node HA)** and **SNO (Single-Node)** cluster topologies, which are the two architectures relevant for edge ACP deployments.
+
+> **KVM is for speed.** You can provision, test, and tear down a full cluster in a day.
+> **Bare-metal is for real deployments.** Hardware varies by site — your contributions are what make this work everywhere.
+
+See [Understanding KVM vs bare-metal](docs/explanation/kvm-vs-baremetal.md) for a deeper discussion of the trade-offs.
 
 ---
 
@@ -25,12 +43,15 @@ Ansible-first automation toolkit for deploying an **Advanced Computing Platform 
 
 ![OPAF Architecture](images/testbed-architecture.jpg)
 
-This repository covers the **Advanced Computing Platform** (top left of the OPAF diagram). Two deployment topologies are supported:
+This repository covers the **Advanced Computing Platform** (top left of the OPAF diagram). Two cluster topologies are supported across both deployment paths:
 
-| Topology | Nodes | ODF | Use case |
-|----------|-------|-----|---------|
-| **HA (converged)** | 3 control-plane nodes also running workloads | Yes | Full ACP testbed |
-| **Non-HA (SNO)** | 1 single-node OpenShift | No | Development / edge evaluation |
+| Topology | Nodes | ODF | Edge use case |
+|----------|-------|-----|--------------|
+| **Converged (HA)** | 3 control-plane nodes also running workloads | ✅ Ceph block, file, object | Full ACP site: runs ODF, AAP, Pipelines, Virt |
+| **SNO (Single-Node)** | 1 node | ❌ (requires 3 nodes for quorum) | Minimal ACP edge node: space/power-constrained sites |
+
+**Converged** is the recommended topology for production ACP deployments — it provides the full platform service stack.
+**SNO** is ideal for sites with a single server, low power budgets, or where ODF storage is provided externally (NFS, iSCSI, or cloud object storage).
 
 ---
 
@@ -78,7 +99,11 @@ This repository covers the **Advanced Computing Platform** (top left of the OPAF
 
 ## Deployment Paths
 
-### IBM Cloud KVM (Validated — v4.21.0)
+### IBM Cloud KVM — for development and testing (Validated — v4.21.0)
+
+> **Use this path when:** You want to quickly spin up a full ACP cluster to test automation, develop playbooks, validate upgrades, or learn the platform — without owning physical servers.
+>
+> VMs can be created in minutes and destroyed just as quickly. Everything is software-defined. This is how the v4.21.0 release was validated.
 
 The IBM Cloud bare-metal server acts as both KVM hypervisor and Ansible helper.
 OpenShift runs inside KVM VMs.
@@ -95,7 +120,11 @@ IBM Cloud bare-metal
 
 See: [`docs/kvm-developer-guide.md`](docs/kvm-developer-guide.md), ADR-0014 through ADR-0019.
 
-### Bare-Metal Direct
+### Bare-Metal Direct — for edge production deployments
+
+> **Use this path when:** You are deploying ACP at an actual edge site or customer facility with physical servers.
+>
+> Every bare-metal environment is different — NIC vendors, BMC firmware versions, switch configurations, and disk layouts all vary. **Community contributions for bare-metal hardware configurations are especially welcome.** If you get it working on your hardware, please submit your `extra-vars.yml` and `nodes.yml` as an example. See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 OpenShift installs directly on physical servers via Agent-Based Installer booted from the agent ISO
 using Redfish virtual media (iDRAC 9+, iLO 5+, Supermicro BMC, AMI MegaRAC).
@@ -108,7 +137,14 @@ Physical server rack
 └── helper     (separate server or VM running Ansible + ISO HTTP server)
 ```
 
-See: [`examples/bare-metal-converged/`](examples/bare-metal-converged/), [`hack/deploy-on-baremetal.sh`](hack/deploy-on-baremetal.sh).
+**SNO on bare-metal** is also supported for single-server edge sites:
+```
+Single server
+└── control-0  (physical, single NIC or bond)
+    (runs OCP control-plane + workloads; no ODF)
+```
+
+See: [`examples/bare-metal-converged/`](examples/bare-metal-converged/), [`examples/bare-metal-sno/`](examples/bare-metal-sno/), [`hack/deploy-on-baremetal.sh`](hack/deploy-on-baremetal.sh).
 
 ---
 
@@ -390,10 +426,24 @@ See [`CLAUDE.md`](CLAUDE.md) for a catalogue of failure patterns encountered dur
 
 ## Contributing
 
+Contributions are welcome on both the KVM and bare-metal paths. Bare-metal contributions are **especially** valuable because hardware environments vary widely — what works for Dell iDRAC may need adjustment for HPE iLO or Supermicro.
+
+**Quick contribution guide:**
+
 1. Fork the repository
 2. Create a feature branch
-3. Run preflight checks: `./hack/verify-odf-prerequisites.sh` and `./hack/verify-post-install-prerequisites.sh`
-4. Submit a pull request
+3. Run preflight checks before submitting:
+   - `./hack/verify-odf-prerequisites.sh`
+   - `./hack/verify-post-install-prerequisites.sh`
+4. Submit a pull request with your hardware environment documented
+
+**What we most need from the bare-metal community:**
+- Example `extra-vars.yml` and `nodes.yml` for different hardware vendors (HP, Dell, Supermicro, Lenovo)
+- SNO bare-metal configurations for space/power-constrained edge sites
+- Alternative DNS configurations (non-Route53 DNS providers)
+- Fixes and workarounds for site-specific networking requirements
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidance on how to contribute bare-metal configurations and fixes.
 
 ---
 

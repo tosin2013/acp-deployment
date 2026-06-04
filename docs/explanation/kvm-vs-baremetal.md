@@ -1,18 +1,38 @@
 # Understanding KVM vs bare-metal deployment paths
 
-`acp-deployment` supports two fundamentally different infrastructure paths for getting OpenShift nodes running: virtual machines on a KVM hypervisor (the IBM Cloud path) and direct installation on physical servers (the bare-metal path). While both paths produce the same OpenShift cluster, they differ significantly in how nodes are created, how DNS works, and critically, how ODF storage networking is configured.
+`acp-deployment` supports two fundamentally different infrastructure paths for getting OpenShift nodes running: virtual machines on a KVM hypervisor (the IBM Cloud path) and direct installation on physical servers (the bare-metal path). While both paths produce the same OpenShift cluster and support the same cluster topologies (Converged HA and SNO), they differ significantly in how nodes are created, how DNS works, and critically, how ODF storage networking is configured.
+
+> **Short answer:** Use KVM to develop and test. Use bare-metal to deploy. Both support Converged (3-node) and SNO for edge sites.
 
 ---
 
 ## Why two paths exist
 
-The ACP reference architecture targets two distinct deployment scenarios with different resource constraints:
+The ACP reference architecture serves two distinct audiences:
 
-**IBM Cloud KVM** is the path for teams that do not own physical servers or need to provision quickly. IBM Cloud provides bare-metal servers that can run KVM/libvirt. The OpenShift nodes become KVM VMs on that host. This path is fast to provision (minutes), easy to destroy and recreate, and well-suited for testbed environments. All of the v4.21.0 validation work was done on this path.
+**IBM Cloud KVM** is the path for teams developing and validating ACP automation. You get a full cluster in hours, you can tear it down and rebuild it to test changes, and the environment is reproducible. This is how `acp-deployment` itself is developed and tested. All of the v4.21.0 validation was done on this path.
 
-**Bare-metal direct** is the path for production ACP deployments and for sites that have physical servers available. Physical servers provide more deterministic performance, no nested virtualisation overhead, and native NIC bonding — which is important for ODF storage network isolation. Industrial ACP deployments will ultimately run on physical hardware.
+**Bare-metal direct** is the path for production ACP deployments at edge facilities. Physical servers at industrial sites are real hardware — they have different NICs, different BMC firmware, different switch configurations. This path is what the project ultimately exists to enable. Because every site is different, community contributions for specific hardware configurations are a core part of the bare-metal story.
 
 The two paths share the same OpenShift cluster topology, the same post-install playbooks, and the same application surface. The differences are purely in the infrastructure layer beneath OpenShift.
+
+---
+
+## Cluster topologies: both paths, same choice
+
+Both KVM and bare-metal support two cluster topologies relevant to edge ACP deployments:
+
+### Converged (3-node compact HA)
+Three servers run both control-plane and workloads. ODF provides block, file, and object storage from local disks. AAP, Pipelines, and OpenShift Virtualization all run on the cluster.
+
+Best for: ACP sites with 3 servers and full platform services (DCN management, pipelines, VM workloads).
+
+### SNO (Single-Node OpenShift)
+One server runs everything. No ODF (Ceph requires 3 nodes for quorum). Storage is provided externally or via a simple storage class (NFS, iSCSI, hostPath).
+
+Best for: Space-constrained or power-constrained edge sites, remote locations with a single server budget, or development environments where you want a minimal footprint.
+
+> **SNO on KVM** is useful for iterating quickly on playbooks that target SNO deployments before committing to physical hardware.
 
 ---
 
@@ -62,12 +82,25 @@ For the full reasoning, see [ADR-0005](../adrs/adr-0005-odf-on-local-nvme-with-m
 
 | Scenario | Recommended path |
 |----------|-----------------|
-| Learning ACP deployment for the first time | KVM on IBM Cloud |
-| Testbed for development and CI testing | KVM on IBM Cloud |
-| Production ACP deployment at a facility | Bare-metal direct |
-| Performance benchmarking for ODF | Bare-metal direct |
-| Need to recreate/destroy the environment quickly | KVM on IBM Cloud |
-| Sites with existing Redfish-capable servers | Bare-metal direct |
+| Learning ACP deployment for the first time | 🖥️ KVM on IBM Cloud |
+| Developing or testing new Ansible roles/playbooks | 🖥️ KVM on IBM Cloud |
+| CI/CD validation of deployment changes | 🖥️ KVM on IBM Cloud |
+| Performance benchmarking for ODF | 🔩 Bare-metal direct |
+| Production ACP deployment at an industrial facility | 🔩 Bare-metal direct |
+| Edge SNO deployment at a space-constrained site | 🔩 Bare-metal direct (SNO) |
+| Sites with existing Redfish-capable servers | 🔩 Bare-metal direct |
+| Need to recreate/destroy the environment quickly | 🖥️ KVM on IBM Cloud |
+
+## Contributing bare-metal configurations
+
+Because bare-metal hardware varies so much between sites, the bare-metal path improves through community contributions. If you deploy on:
+
+- A specific server vendor (Dell, HPE, Supermicro, Lenovo, Cisco UCS)
+- A non-Route53 DNS provider (Cloudflare, corporate DNS, split-horizon)
+- An unusual NIC configuration (SR-IOV, single NIC, mixed bonding modes)
+- An air-gapped or restricted network environment
+
+...please share your working `extra-vars.yml` and `nodes.yml` (with credentials removed) as a new example directory. See [CONTRIBUTING.md](../../CONTRIBUTING.md) for how.
 
 ---
 

@@ -2,9 +2,24 @@
 
 `acp-deployment` is an Ansible automation toolkit for deploying an **Advanced Computing Platform (ACP)** reference implementation on Red Hat OpenShift Container Platform 4.21.
 
-It covers the full deployment lifecycle: KVM host preparation, cluster installation via Agent-Based Installer, and post-install platform services (ODF storage, TLS, Ansible Automation Platform, OpenShift Pipelines, OpenShift Virtualization).
+It covers the full deployment lifecycle: KVM host preparation or bare-metal provisioning via Redfish, cluster installation via Agent-Based Installer, and post-install platform services (ODF storage, TLS, Ansible Automation Platform, OpenShift Pipelines, OpenShift Virtualization).
 
-Two infrastructure paths are supported: **IBM Cloud KVM** (VMs on a bare-metal server) and **Bare-Metal Direct** (physical servers via Redfish BMC).
+---
+
+## Choose your path
+
+| Path | Best for | Cluster topologies |
+|------|---------|-------------------|
+| 🖥️ **IBM Cloud KVM** | Fast iteration, development, testing, learning | Converged (3-node HA) · SNO |
+| 🔩 **Bare-Metal Direct** | Edge production deployments at real facilities | Converged (3-node HA) · SNO |
+
+**KVM is fast.** Provision a full cluster in a day. Ideal for validating automation, testing upgrades, and learning ACP.
+
+**Bare-metal is real.** Hardware varies by site. Contributions from the community for different vendors and configurations are especially welcome — see [CONTRIBUTING.md](../CONTRIBUTING.md).
+
+Both topologies (**Converged** for full-stack ACP and **SNO** for minimal edge nodes) are supported on both paths.
+
+See [KVM vs bare-metal: understanding the difference](explanation/kvm-vs-baremetal.md) for the full trade-off discussion.
 
 ---
 
@@ -25,10 +40,12 @@ These docs follow the [Diátaxis framework](https://diataxis.fr) — four distin
 
 Step-by-step guides that take you through a learning experience. Follow along in your own environment and end up with a working result.
 
-| Tutorial | What you build |
-|----------|---------------|
-| [Deploy your first ACP cluster on IBM Cloud KVM](tutorials/deploy-acp-on-ibm-cloud-kvm.md) | A 3-node OCP cluster on KVM VMs with ODF, TLS, and platform services |
-| [Explore ODF persistent storage](tutorials/explore-odf-storage.md) | Hands-on experience with Ceph block and file storage (PVCs, RWX volumes) |
+| Tutorial | Path | What you build |
+|----------|------|---------------|
+| [Deploy your first ACP cluster on IBM Cloud KVM](tutorials/deploy-acp-on-ibm-cloud-kvm.md) | 🖥️ KVM | A 3-node OCP cluster on KVM VMs with ODF, TLS, and platform services |
+| [Explore ODF persistent storage](tutorials/explore-odf-storage.md) | Both | Hands-on experience with Ceph block and file storage (PVCs, RWX volumes) |
+
+> **Want a bare-metal tutorial?** If you have physical servers and can document the steps, please contribute one — see [CONTRIBUTING.md](../CONTRIBUTING.md).
 
 ---
 
@@ -38,13 +55,13 @@ Directions for accomplishing specific real-world goals. Each guide assumes you a
 
 **Deployment tasks:**
 
-| Guide | Goal |
-|-------|------|
-| [Deploy ODF storage on a KVM cluster](how-to/deploy-odf-on-kvm.md) | Install ODF with local virtual disks |
-| [Configure TLS certificates with ZeroSSL](how-to/configure-zerossl-tls.md) | Replace self-signed certs with publicly trusted ZeroSSL certs |
-| [Run the post-install platform services pipeline](how-to/run-post-install-pipeline.md) | Install all platform services in dependency order |
-| [Expand VM RAM on running KVM nodes](how-to/expand-vm-ram.md) | Rolling RAM increase without losing cluster quorum |
-| [Deploy on bare-metal servers](how-to/deploy-on-bare-metal.md) | Boot physical servers via Redfish BMC |
+| Guide | Path | Goal |
+|-------|------|------|
+| [Deploy ODF storage on a KVM cluster](how-to/deploy-odf-on-kvm.md) | 🖥️ KVM | Install ODF with local virtual disks |
+| [Configure TLS certificates with ZeroSSL](how-to/configure-zerossl-tls.md) | Both | Replace self-signed certs with publicly trusted ZeroSSL certs |
+| [Run the post-install platform services pipeline](how-to/run-post-install-pipeline.md) | Both | Install all platform services in dependency order |
+| [Expand VM RAM on running KVM nodes](how-to/expand-vm-ram.md) | 🖥️ KVM | Rolling RAM increase without losing cluster quorum |
+| [Deploy on bare-metal servers (converged or SNO)](how-to/deploy-on-bare-metal.md) | 🔩 Bare-metal | Boot physical servers via Redfish BMC |
 
 **Troubleshooting (from hardening reports):**
 
