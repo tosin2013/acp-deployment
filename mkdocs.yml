@@ -1,0 +1,86 @@
+site_name: ACP Deployment Automation
+site_description: >-
+  Ansible-first automation toolkit for deploying an Advanced Computing Platform
+  reference implementation on Red Hat OpenShift Container Platform.
+  Covers IBM Cloud KVM and bare-metal deployment paths for OCP 4.21.
+site_url: https://tosin2013.github.io/acp-deployment
+repo_url: https://github.com/tosin2013/acp-deployment
+repo_name: tosin2013/acp-deployment
+edit_uri: edit/main/
+
+theme:
+  name: material
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.expand
+    - navigation.top
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+    - content.tabs.link
+  palette:
+    - scheme: default
+      primary: red
+      accent: red
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - scheme: slate
+      primary: red
+      accent: red
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+
+plugins:
+  - search
+
+markdown_extensions:
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.superfences
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.details
+  - admonition
+  - toc:
+      permalink: true
+  - tables
+  - attr_list
+
+nav:
+  - Home: docs/index.md
+  - Tutorials:
+    - docs/tutorials/index.md
+    - Deploy ACP on IBM Cloud KVM: docs/tutorials/deploy-acp-on-ibm-cloud-kvm.md
+    - Explore ODF persistent storage: docs/tutorials/explore-odf-storage.md
+  - How-To Guides:
+    - docs/how-to/index.md
+    - Deploy ODF on KVM: docs/how-to/deploy-odf-on-kvm.md
+    - Configure ZeroSSL TLS: docs/how-to/configure-zerossl-tls.md
+    - Run post-install pipeline: docs/how-to/run-post-install-pipeline.md
+    - Expand VM RAM: docs/how-to/expand-vm-ram.md
+    - Deploy on bare-metal: docs/how-to/deploy-on-bare-metal.md
+    - Resolve ODF Multus macvlan: docs/how-to/resolve-odf-multus-kvm.md
+    - Resolve ansible_user undefined: docs/how-to/resolve-ansible-user-undefined.md
+    - Resolve certmanager apiVersion: docs/how-to/resolve-certmanager-apiversion.md
+    - Resolve kubeconfig stale CA: docs/how-to/resolve-kubeconfig-stale-ca.md
+  - Reference:
+    - docs/reference/index.md
+    - extra-vars.yml parameters: docs/reference/extra-vars.md
+    - hack/ scripts: docs/reference/hack-scripts.md
+    - Ansible playbooks: docs/reference/playbooks.md
+    - ADR index: docs/reference/adrs.md
+  - Explanation:
+    - docs/explanation/index.md
+    - Architecture overview: docs/explanation/architecture-overview.md
+    - Deployment pipeline: docs/explanation/deployment-pipeline.md
+    - KVM vs bare-metal: docs/explanation/kvm-vs-baremetal.md
+    - ODF storage design: docs/explanation/odf-storage-design.md
+    - Why Ansible?: docs/explanation/why-ansible.md
+  - ADRs:
+    - docs/adrs/README.md
+  - Release Notes:
+    - v4.21.0: docs/releases/v4.21.0.md
+  - CHANGELOG: CHANGELOG.md
