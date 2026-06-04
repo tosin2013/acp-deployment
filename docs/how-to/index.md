@@ -20,3 +20,7 @@ How-to guides are **task-oriented**. They help you accomplish a specific goal. U
 - [Resolve: ansible_user is undefined on the helper node](resolve-ansible-user-undefined.md)
 - [Resolve: cert-manager CertManager CR fails with 'Failed to find exact match'](resolve-certmanager-apiversion.md)
 - [Resolve: CERTIFICATE_VERIFY_FAILED after API certificate rotation](resolve-kubeconfig-stale-ca.md)
+
+## Contributing bare-metal support
+
+- [Validate and submit a bare-metal example PR](validate-and-submit-bare-metal-pr.md)

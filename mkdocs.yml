@@ -57,6 +57,7 @@ nav:
     - tutorials/index.md
     - Deploy ACP on IBM Cloud KVM: tutorials/deploy-acp-on-ibm-cloud-kvm.md
     - Explore ODF persistent storage: tutorials/explore-odf-storage.md
+    - Contribute a bare-metal example: tutorials/contribute-bare-metal-example.md
   - How-To Guides:
     - how-to/index.md
     - Deploy ODF on KVM: how-to/deploy-odf-on-kvm.md
@@ -68,12 +69,15 @@ nav:
     - Resolve ansible_user undefined: how-to/resolve-ansible-user-undefined.md
     - Resolve certmanager apiVersion: how-to/resolve-certmanager-apiversion.md
     - Resolve kubeconfig stale CA: how-to/resolve-kubeconfig-stale-ca.md
+    - Validate and submit bare-metal PR: how-to/validate-and-submit-bare-metal-pr.md
   - Reference:
     - reference/index.md
     - extra-vars.yml parameters: reference/extra-vars.md
     - hack/ scripts: reference/hack-scripts.md
     - Ansible playbooks: reference/playbooks.md
     - ADR index: reference/adrs.md
+    - Bare-metal hardware compatibility: reference/bare-metal-hardware.md
+    - Bare-metal hardware sizing: reference/bare-metal-sizing.md
   - Explanation:
     - explanation/index.md
     - Architecture overview: explanation/architecture-overview.md
