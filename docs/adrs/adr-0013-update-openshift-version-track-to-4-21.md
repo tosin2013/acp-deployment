@@ -6,6 +6,11 @@
 ## Status
 Accepted — Amended
 
+> **Amendment (2026-06-05):** A `release-4.20` branch has been created from `main` to support
+> deployments targeting OCP 4.20. The branch carries the same version-pin changes described in
+> this ADR but reversed to target 4.20 (ODF `stable-4.20`, bootstrap `stable-4.20`). The
+> multi-version branching strategy is documented in [ADR-0020](adr-0020-release-branch-per-ocp-version.md).
+
 > **Amendment (2026-06-03):** Extended `startingCSV` removal to cover cert-manager.
 > The original decision removed `startingCSV` from the ODF subscription only. During
 > the June 2026 ADR state review, the same pinned-CSV risk was identified in
