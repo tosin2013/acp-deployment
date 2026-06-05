@@ -46,7 +46,7 @@ dns:
 
 # OpenShift variables
 openshift:
-  version: stable # Resolves to latest stable OCP release (4.21.x as of June 2026); pin to e.g. 4.21.18 for full reproducibility
+  version: stable-4.20 # Resolves to latest stable 4.20.x release; pin to e.g. 4.20.18 for full reproducibility
   cluster_name: acp # Set the cluster name
   base_domain: lab.msp.redhat.com # Set the base dns domain
   pull_secret: 'your-pull-secret'

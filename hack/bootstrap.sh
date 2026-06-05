@@ -195,7 +195,7 @@ install_openshift_tools() {
     if [[ "${RHEL_VER}" -le 8 ]]; then
         OC_CHANNEL="stable-4.20"
     else
-        OC_CHANNEL="stable-4.21"
+        OC_CHANNEL="stable-4.20"
     fi
 
     local OC_BASE_URL="https://mirror.openshift.com/pub/openshift-v4/x86_64/clients/ocp/${OC_CHANNEL}"

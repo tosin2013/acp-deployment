@@ -205,6 +205,7 @@ See `hack/setup-dnsmasq.sh`.
 | Version | Date | OCP | Status |
 |---------|------|-----|--------|
 | v4.21.0 | 2026-06-04 | 4.21.8 | First tagged release. IBM Cloud KVM (3-node compact HA). Two hardening cycles. |
+| v4.20.0-rc1 | 2026-06-05 | 4.20.x | Release candidate. Branch: `release-4.20`. ODF `stable-4.20`. Not yet production validated. |
 
 ### v4.21.0 — 2026-06-04
 

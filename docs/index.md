@@ -1,6 +1,8 @@
 # ACP Deployment Documentation
 
-`acp-deployment` is an Ansible automation toolkit for deploying an **Advanced Computing Platform (ACP)** reference implementation on Red Hat OpenShift Container Platform 4.21.
+`acp-deployment` is an Ansible automation toolkit for deploying an **Advanced Computing Platform (ACP)** reference implementation on Red Hat OpenShift Container Platform.
+
+> **You are reading the `release-4.20` branch** — targeting OCP 4.20.x. For the fully production-validated 4.21 release, see the [`main` branch](https://github.com/tosin2013/acp-deployment/tree/main).
 
 It covers the full deployment lifecycle: KVM host preparation or bare-metal provisioning via Redfish, cluster installation via Agent-Based Installer, and post-install platform services (ODF storage, TLS, Ansible Automation Platform, OpenShift Pipelines, OpenShift Virtualization).
 

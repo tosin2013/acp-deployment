@@ -1,8 +1,9 @@
 # Advanced Computing Platform Deployment Automation
 
-[![Version](https://img.shields.io/badge/version-v4.21.0-blue)](https://github.com/tosin2013/acp-deployment/releases/tag/v4.21.0)
-[![OCP](https://img.shields.io/badge/OpenShift-4.21-red)](https://docs.openshift.com/container-platform/4.21/)
+[![Version](https://img.shields.io/badge/version-v4.20.0--rc1-blue)](https://github.com/tosin2013/acp-deployment/releases/tag/v4.20.0-rc1)
+[![OCP](https://img.shields.io/badge/OpenShift-4.20-red)](https://docs.openshift.com/container-platform/4.20/)
 [![License](https://img.shields.io/badge/license-Apache%202.0-green)](LICENSE)
+[![Branch](https://img.shields.io/badge/branch-release--4.20-orange)](https://github.com/tosin2013/acp-deployment/tree/release-4.20)
 
 Ansible-first automation toolkit for deploying an **Advanced Computing Platform (ACP)** reference implementation on Red Hat OpenShift Container Platform. Covers full cluster lifecycle: KVM host preparation or bare-metal provisioning via Redfish, cluster installation via Agent-Based Installer, and complete post-install platform service deployment.
 
@@ -59,19 +60,19 @@ This repository covers the **Advanced Computing Platform** (top left of the OPAF
 
 | Service | Version | Role |
 |---------|---------|------|
-| OpenShift Container Platform | 4.21.x | Container orchestration |
-| OpenShift Data Foundation (ODF) | 4.21 | Block, file, and object storage |
+| OpenShift Container Platform | 4.20.x | Container orchestration |
+| OpenShift Data Foundation (ODF) | 4.20 | Block, file, and object storage |
 | cert-manager + ZeroSSL | v1.19.0 | Automated TLS for ingress and API |
 | OpenShift Pipelines (Tekton) | v1.22.x | CI/CD pipelines |
 | Ansible Automation Platform | 2.6.x | DCN management and automation |
-| OpenShift Virtualization (KubeVirt) | 4.21.x | VM workload support |
-| Local Storage Operator | 4.21 | NVMe/disk discovery for ODF |
+| OpenShift Virtualization (KubeVirt) | 4.20.x | VM workload support |
+| Local Storage Operator | 4.20 | NVMe/disk discovery for ODF |
 
 ---
 
 ## Hardware Requirements
 
-### HA Deployment (Validated — v4.21.0)
+### HA Deployment (Validated — v4.21.0 on 4.21; rc1 on 4.20)
 
 **3 × OCP nodes (IBM Cloud bare-metal or equivalent):**
 
@@ -401,12 +402,26 @@ All key design decisions are documented in [`docs/adrs/`](docs/adrs/). Key ADRs 
 | [ADR-0005](docs/adrs/adr-0005-odf-on-local-nvme-with-multus-storage-network.md) | ODF on local NVMe (KVM exception) | Accepted |
 | [ADR-0006](docs/adrs/adr-0006-operator-driven-post-install-configuration-via-olm.md) | OLM operator pattern | Accepted |
 | [ADR-0009](docs/adrs/adr-0009-zerossl-cert-manager-dns01-tls.md) | ZeroSSL + cert-manager TLS | Accepted |
-| [ADR-0013](docs/adrs/adr-0013-update-openshift-version-track-to-4-21.md) | OCP 4.21 version track | Accepted |
+| [ADR-0013](docs/adrs/adr-0013-update-openshift-version-track-to-4-21.md) | OCP version track (4.21 on main) | Accepted |
 | [ADR-0014](docs/adrs/adr-0014-ibm-cloud-bare-metal-as-kvm-host-and-helper.md) | IBM Cloud KVM host | Accepted |
+| [ADR-0020](docs/adrs/adr-0020-release-branch-per-ocp-version.md) | Release branch per OCP version | Accepted |
 
 ---
 
-## Known Limitations (v4.21.0)
+## Version branches
+
+This repository follows a **branch-per-OCP-minor** strategy (see [ADR-0020](docs/adrs/adr-0020-release-branch-per-ocp-version.md)):
+
+| Branch | OCP version | Status | Notes |
+|--------|-------------|--------|-------|
+| [`main`](https://github.com/tosin2013/acp-deployment/tree/main) | 4.21 | Production validated | v4.21.0 release |
+| [`release-4.20`](https://github.com/tosin2013/acp-deployment/tree/release-4.20) | 4.20 | RC — not yet production validated | v4.20.0-rc1 |
+
+**You are on `release-4.20`.** To use the fully validated 4.21 release, switch to `main`.
+
+---
+
+## Known Limitations (release-4.20)
 
 - **Nested virtualisation required:** OpenShift Virtualization on a KVM host requires nested KVM (`kvm_intel/kvm_amd` with nested=1). IBM Cloud bare-metal supports this; most cloud VMs do not.
 - **ODF not supported on SNO:** OpenShift Data Foundation requires 3 nodes for Ceph quorum. SNO deployments use no ODF.
